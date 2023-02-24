@@ -1,0 +1,409 @@
+     1                                  ;***************************************************************************************************************************
+     2                                  ;Program name: "Arrays".  This program will prompt user to enter floats and store it into an array and calculate the        *   
+     3                                  ;magnitude of that array. There will be 2 sets of arrays, so the program will repeat similar steps twice and at the end     *
+     4                                  ;both arrays will be appended into a separate array and the magnitude of that array will be calculated as well. The magnitude*
+     5                                  ;of the combined array will be returned to main. Main and display_array is implemented in c, and the rest is implemented    *
+     6                                  ;in X86. Copyright (C) 2023  William Sutanto                                                                                *
+     7                                  ;This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License  *
+     8                                  ;version 3 as published by the Free Software Foundation.                                                                    *
+     9                                  ;This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied         *
+    10                                  ;warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.     *
+    11                                  ;A copy of the GNU General Public License v3 is available here:  <https://www.gnu.org/licenses/>.                           *
+    12                                  ;****************************************************************************************************************************
+    13                                  
+    14                                  
+    15                                  
+    16                                  ;========1=========2=========3=========4=========5=========6=========7=========8=========9=========0=========1=========2=========3=========4=========5=========6=========7**
+    17                                  
+    18                                  ;Author information
+    19                                  ;  Author name: William Sutanto
+    20                                  ;  Author email: wsutanto@csu.fullerton.edu
+    21                                  ;
+    22                                  ;Program information
+    23                                  ;  Program name: Arrays
+    24                                  ;  Programming languages: C, X86 assembly
+    25                                  ;  Date program began: 2023-Feb-12
+    26                                  ;  Date of last update: 2023-Feb-20
+    27                                  ;  Comments reorganized: 2023-Feb-20
+    28                                  ;  Files in the program: main.c, manager.asm, display_array.c, magnitude.asm, append.asm, input_array.asm, isfloat.asm, r.sh
+    29                                  ;
+    30                                  ;Purpose
+    31                                  ;  Build a program in assembly language that will take in floats from user and store it into an array. This program will repeat the steps twice
+    32                                  ;  so that there will be 2 arrays and the magnitude of each array will be calculated. At the end, the 2 arrays will be combined into an array
+    33                                  ;  and the magnitude of that array will be calculated and returned to main.
+    34                                  ;
+    35                                  ;This file
+    36                                  ;  File name: manager.asm
+    37                                  ;  Language: X86-64
+    38                                  ;  Syntax: Intel
+    39                                  ;  Max page width: 172 columns
+    40                                  ;  Optimal print specification: Landscape, 7-point font, monospace, 172 columns, 8½x11 paper
+    41                                  ;  Assemble: nasm -f elf64 -l manager.lis -o manager.o manager.asm
+    42                                  ;
+    43                                  ;========1=========2=========3=========4=========5=========6=========7=========8=========9=========0=========1=========2=========3=========4=========5=========6=========7**
+    44                                  ;
+    45                                  ;Author information
+    46                                  ;  Author name: William Sutanto
+    47                                  ;  Author email: wsutanto@csu.fullerton.edu
+    48                                  ;
+    49                                  ;Program information
+    50                                  ;  Program name: Arrays
+    51                                  ;  Programming languages: C, X86 assembly
+    52                                  ;  Date program began: 2023-Feb-12
+    53                                  ;  Date of last update: 2023-Feb-20
+    54                                  ;
+    55                                  ;Purpose
+    56                                  ;  Build a program in assembly language that will take in floats from user and store it into an array. This program will repeat the steps twice
+    57                                  ;  so that there will be 2 arrays and the magnitude of each array will be calculated. At the end, the 2 arrays will be combined into an array
+    58                                  ;  and the magnitude of that array will be calculated and returned to main
+    59                                  ;
+    60                                  ;Project information
+    61                                  ;  Project files: main.c, manager.asm, display_array.c, magnitude.asm, append.asm, input_array.asm, isfloat.asm, r.sh
+    62                                  ;  Status: Available for public review.
+    63                                  ;
+    64                                  ;Translator information
+    65                                  ;  Linux: nasm -f elf64 -l manager.lis -o manager.o manager.asm
+    66                                  ;
+    67                                  ;References and credits
+    68                                  ;   Professor Floyd Holliday's website for isfloat.asm module 
+    69                                  ;   https://sites.google.com/a/fullerton.edu/activeprofessor/4-subjects/x86-programming/library-software/isfloat-x86-only
+    70                                  ;
+    71                                  ;
+    72                                  ;Format information
+    73                                  ;  Page width: 172 columns
+    74                                  ;  Begin comments: 61
+    75                                  ;  Optimal print specification: Landscape, 7 points, monospace, 8½x11 paper
+    76                                  ;
+    77                                  ;
+    78                                  ;
+    79                                  ;
+    80                                  ;========1=========2=========3=========4=========5=========6=========7=========8=========9=========0=========1=========2=========3=========4=========5=========6=========7**
+    81                                  ;
+    82                                  ;===== Begin code area ====================================================================================================================================================
+    83                                  ; Declare external C++ functions & make funct 'manager' visible to other languages & create constant
+    84                                  extern printf            ;external C++ function to print to console
+    85                                  extern scanf             ;external C++ function to read input from console
+    86                                  extern input_array       ;asm module to read input of floats from console and store it into an array
+    87                                  extern display_array     ;C module to display floats in an array
+    88                                  extern magnitude         ;asm module to calculate magnitude of all floats stored in an array
+    89                                  extern append            ;asm module to append arrayA and arrayB to a single combined array
+    90                                  global manager        
+    91                                  
+    92                                  segment .data                       ;Place initialized data here
+    93                                  ;========== message to be printed to user =================================================================================================================================
+    94 00000000 546869732070726F67-     welcome db "This program will manage your arrays of 64-bit floats",10,0                              ;output a welcome message to user
+    94 00000009 72616D2077696C6C20-
+    94 00000012 6D616E61676520796F-
+    94 0000001B 757220617272617973-
+    94 00000024 206F662036342D6269-
+    94 0000002D 7420666C6F6174730A-
+    94 00000036 00                 
+    95 00000037 466F72206172726179-     prompt_arrayA db "For array A enter a sequence of 64-bit floats separated by white space.",10,0      ;to prompt user to enter floats for array A
+    95 00000040 204120656E74657220-
+    95 00000049 612073657175656E63-
+    95 00000052 65206F662036342D62-
+    95 0000005B 697420666C6F617473-
+    95 00000064 207365706172617465-
+    95 0000006D 642062792077686974-
+    95 00000076 652073706163652E0A-
+    95 0000007F 00                 
+    96 00000080 0A466F722061727261-     prompt_arrayB db 10,"For array B enter a sequence of 64-bit floats separated by white space.",10,0   ;to prompt user to enter floats for array B
+    96 00000089 79204220656E746572-
+    96 00000092 20612073657175656E-
+    96 0000009B 6365206F662036342D-
+    96 000000A4 62697420666C6F6174-
+    96 000000AD 732073657061726174-
+    96 000000B6 656420627920776869-
+    96 000000BF 74652073706163652E-
+    96 000000C8 0A00               
+    97 000000CA 416674657220746865-     prompt_enter db "After the last input press enter followed by Control+D: ",10,0                      ;after this line user will have to enter floats
+    97 000000D3 206C61737420696E70-
+    97 000000DC 757420707265737320-
+    97 000000E5 656E74657220666F6C-
+    97 000000EE 6C6F77656420627920-
+    97 000000F7 436F6E74726F6C2B44-
+    97 00000100 3A200A00           
+    98 00000104 0A5468657365206E75-     confirm_arrayA db 10,"These number were received and placed into array A:",10,0                      ;output floats entered for array A
+    98 0000010D 6D6265722077657265-
+    98 00000116 207265636569766564-
+    98 0000011F 20616E6420706C6163-
+    98 00000128 656420696E746F2061-
+    98 00000131 7272617920413A0A00 
+    99 0000013A 0A5468657365206E75-     confirm_arrayB db 10,"These number were received and placed into array B:",10,0                      ;output floats entered for array B
+    99 00000143 6D6265722077657265-
+    99 0000014C 207265636569766564-
+    99 00000155 20616E6420706C6163-
+    99 0000015E 656420696E746F2061-
+    99 00000167 7272617920423A0A00 
+   100 00000170 546865206D61676E69-     output_arrayA db "The magnitude of array A is %.5lf",10,0                                            ;output magnitude of array A
+   100 00000179 74756465206F662061-
+   100 00000182 727261792041206973-
+   100 0000018B 20252E356C660A00   
+   101 00000193 546865206D61676E69-     output_arrayB db "The magnitude of this array B is %.5lf",10,0                                       ;output magnitude of array B
+   101 0000019C 74756465206F662074-
+   101 000001A5 686973206172726179-
+   101 000001AE 204220697320252E35-
+   101 000001B7 6C660A00           
+   102 000001BB 0A4172726179732041-     confirm_appended db 10,"Arrays A and B have been appended and given the name A⊕ B.",10,0            ;let user know that array A and B have been appended
+   102 000001C4 20616E642042206861-
+   102 000001CD 7665206265656E2061-
+   102 000001D6 7070656E6465642061-
+   102 000001DF 6E6420676976656E20-
+   102 000001E8 746865206E616D6520-
+   102 000001F1 41E28A9520422E0A00 
+   103 000001FA 41E28A95204220636F-     output_AB db "A⊕ B contains",10,0                                                                   ;output appended A+B
+   103 00000203 6E7461696E730A00   
+   104 0000020B 0A546865206D61676E-     output_magnitudeAB db 10,"The magnitude of  A⊕ B is %.5lf",10,0                                     ;output magnitude of appended A+B
+   104 00000214 6974756465206F6620-
+   104 0000021D 2041E28A9520422069-
+   104 00000226 7320252E356C660A00 
+   105                                  
+   106                                  max equ 50  ;declare array size
+   107                                  
+   108                                  
+   109                                  segment .bss
+   110 00000000 <res 190h>              arrayA resq max         ;declare array A
+   111 00000190 <res 190h>              arrayB resq max         ;declare array B
+   112 00000320 <res 190h>              combined_array resq max ;declare combined array of A and B
+   113                                  
+   114                                  segment .text
+   115                                  
+   116                                  manager:         ;start execution of program
+   117                                  
+   118                                  ;Prolog ===== Insurance for any caller of this assembly module ============================================================================================================
+   119                                  ;Any future program calling this module that the data in the caller's GPRs will not be modified.
+   120 00000000 55                      push rbp                                                    ;Push memory address of base of previous stack frame onto stack top
+   121 00000001 4889E5                  mov  rbp,rsp                                                ;Copy value of stack pointer into base pointer, rbp = rsp = both point to stack top
+   122                                  ; Rbp now holds the address of the new stack frame, i.e "top" of stack
+   123 00000004 57                      push rdi                                                    ;Backup rdi
+   124 00000005 56                      push rsi                                                    ;Backup rsi
+   125 00000006 52                      push rdx                                                    ;Backup rdx
+   126 00000007 51                      push rcx                                                    ;Backup rcx
+   127 00000008 4150                    push r8                                                     ;Backup r8
+   128 0000000A 4151                    push r9                                                     ;Backup r9
+   129 0000000C 4152                    push r10                                                    ;Backup r10
+   130 0000000E 4153                    push r11                                                    ;Backup r11
+   131 00000010 4154                    push r12                                                    ;Backup r12
+   132 00000012 4155                    push r13                                                    ;Backup r13
+   133 00000014 4156                    push r14                                                    ;Backup r14
+   134 00000016 4157                    push r15                                                    ;Backup r15
+   135 00000018 53                      push rbx                                                    ;Backup rbx
+   136 00000019 9C                      pushf                                                       ;Backup rflags
+   137                                  
+   138 0000001A 6A00                    push qword 0                   ;push to remain on the boundary
+   139                                  
+   140                                  ;========== Output welcome message =====================================================================================================================================
+   141 0000001C 6A00                    push qword 0                    ;Push 8 bytes to get onto an 16-byte boundary
+   142 0000001E B800000000              mov rax, 0                      ;no data from SSE will be printed i.e. 0 xmm registers used
+   143 00000023 48BF-                   mov rdi, welcome                ;"This program will manage your arrays of 64-bit floats"
+   143 00000025 [0000000000000000] 
+   144 0000002D E8(00000000)            call printf                     ;call the external C++ print function
+   145 00000032 58                      pop rax                         ;remove the earlier push
+   146                                  
+   147                                  ;========== Output prompt for array A ==================================================================================================================================
+   148 00000033 6A00                    push qword 0                    ;Push 8 bytes to get onto an 16-byte boundary
+   149 00000035 B800000000              mov rax, 0                      ;no data from SSE will be printed i.e. 0 xmm registers used
+   150 0000003A 48BF-                   mov rdi, prompt_arrayA          ;"For array A enter a sequence of 64-bit floats separated by white space."
+   150 0000003C [3700000000000000] 
+   151 00000044 E8(00000000)            call printf                     ;call the external C++ print function
+   152 00000049 58                      pop rax                         ;remove earlier push
+   153                                  
+   154                                  ;========== Output instruction for user to enter floats ================================================================================================================
+   155 0000004A 6A00                    push qword 0                    ;Push 8 bytes to get onto an 16-byte boundary
+   156 0000004C B800000000              mov rax, 0                      ;no data from SSE will be printed i.e. 0 xmm registers used
+   157 00000051 48BF-                   mov rdi, prompt_enter           ;"After the last input press enter followed by Control+D: "
+   157 00000053 [CA00000000000000] 
+   158 0000005B E8(00000000)            call printf                     ;call the external C++ print function
+   159 00000060 58                      pop rax                         ;remove earlier push
+   160                                  
+   161                                  ;========== Fill the array using the input_array module ===============================================================================================================
+   162 00000061 6A00                    push qword 0                    ;Push 8 bytes to get onto an 16-byte boundary
+   163 00000063 B800000000              mov rax, 0                      ;no data from SSE will be printed i.e. 0 xmm registers used
+   164 00000068 48BF-                   mov rdi, arrayA                 ;move arrayA to rdi so that it will be the first parameter being passed when calling input_array module
+   164 0000006A [0000000000000000] 
+   165 00000072 BE32000000              mov rsi, max                    ;move size of arrayA to rsi so that it will be the second parameter being passed when calling input_array module
+   166 00000077 E8(00000000)            call input_array                ;call input_array asm module to fill the array with floats entered by user
+   167 0000007C 4989C7                  mov r15, rax                    ;r15 stores the count of floats entered into the array
+   168 0000007F 58                      pop rax                         ;remove earlier push
+   169                                  
+   170                                  ;========== Heading to output floats that were entered into arrayA ====================================================================================================
+   171 00000080 6A00                    push qword 0                    ;Push 8 bytes to get onto an 16-byte boundary
+   172 00000082 B800000000              mov rax, 0                      ;no data from SSE will be printed i.e. 0 xmm registers used
+   173 00000087 48BF-                   mov rdi, confirm_arrayA         ;"These number were received and placed into array A:"
+   173 00000089 [0401000000000000] 
+   174 00000091 E8(00000000)            call printf                     ;call the external C++ function
+   175 00000096 58                      pop rax                         ;remove earlier push
+   176                                  
+   177                                  ;========== Output floats that were entered into arrayA by calling display_array module ===============================================================================
+   178 00000097 6A00                    push qword 0                    ;Push 8 bytes to get onto an 16-byte boundary
+   179 00000099 B800000000              mov rax, 0                      ;no data from SSE will be printed i.e. 0 xmm registers used
+   180 0000009E 48BF-                   mov rdi, arrayA                 ;move arrayA to rdi so that it will be the first parameter being passed when calling display_array module
+   180 000000A0 [0000000000000000] 
+   181 000000A8 4C89FE                  mov rsi, r15                    ;move r15 to rsi so that it will be the second parameter being passed when calling display_array module
+   182 000000AB E8(00000000)            call display_array              ;call the display_array module that will output floats stored in the array in a single line separated by white spaces
+   183 000000B0 58                      pop rax                         ;remove earlier push
+   184                                  
+   185                                  ;========== Compute magnitude of arrayA by calling magnitude module ======================================================================================================
+   186 000000B1 6A00                    push qword 0                    ;Push 8 bytes to get onto an 16-byte boundary
+   187 000000B3 B800000000              mov rax, 0                      ;no data from SSE will be printed i.e. 0 xmm registers used
+   188 000000B8 48BF-                   mov rdi, arrayA                 ;move arrayA to rdi so that it will be the first parameter being passed when calling magnitude module
+   188 000000BA [0000000000000000] 
+   189 000000C2 BE32000000              mov rsi, max                    ;move size of arrayA to rsi so that it will be the second parameter passed when calling magnitude module
+   190 000000C7 E8(00000000)            call magnitude                  ;call magnitude module that will calculate the magnitude of the floats in arrayA
+   191 000000CC F2440F10F8              movsd xmm15, xmm0               ;xmm15 now contains the magnitude of arrayA
+   192 000000D1 58                      pop rax                         ;remove earlier push
+   193                                  
+   194                                  ;========== Output magnitude of arrayA =================================================================================================================================
+   195 000000D2 6A00                    push qword 0                    ;Push 8 bytes to get onto an 16-byte boundary
+   196 000000D4 B801000000              mov rax, 1                      ;1 xmm register will be printed
+   197 000000D9 48BF-                   mov rdi, output_arrayA          ;"The magnitude of array A is %.5lf"
+   197 000000DB [7001000000000000] 
+   198 000000E3 F2410F10C7              movsd xmm0, xmm15               ;move magnitude of arrayA stored in xmm15 to xmm0 to be printed
+   199 000000E8 E8(00000000)            call printf                     ;call external C++ print function
+   200 000000ED 58                      pop rax                         ;remove earlier push
+   201                                  
+   202                                  
+   203                                  ;========== Output prompt for array B ==================================================================================================================================
+   204 000000EE 6A00                    push qword 0                    ;Push 8 bytes to get onto an 16-byte boundary
+   205 000000F0 B800000000              mov rax, 0                      ;no data from SSE will be printed i.e. 0 xmm registers used
+   206 000000F5 48BF-                   mov rdi, prompt_arrayB          ;"For array B enter a sequence of 64-bit floats separated by white space."
+   206 000000F7 [8000000000000000] 
+   207 000000FF E8(00000000)            call printf                     ;call external C++ function to print
+   208 00000104 58                      pop rax                         ;remove earlier push
+   209                                  
+   210                                  ;========== Output instruction for user to enter floats ================================================================================================================
+   211 00000105 6A00                    push qword 0                    ;Push 8 bytes to get onto an 16-byte boundary
+   212 00000107 B800000000              mov rax, 0                      ;no data from SSE will be printed i.e. 0 xmm registers used
+   213 0000010C 48BF-                   mov rdi, prompt_enter           ;"After the last input press enter followed by Control+D: "
+   213 0000010E [CA00000000000000] 
+   214 00000116 E8(00000000)            call printf                     ;call external C++ function to print
+   215 0000011B 58                      pop rax                         ;remove earlier push
+   216                                  
+   217                                  ;========== Fill the array using the input_array module ===============================================================================================================
+   218 0000011C 6A00                    push qword 0                    ;Push 8 bytes to get onto an 16-byte boundary
+   219 0000011E B800000000              mov rax, 0                      ;no data from SSE will be printed i.e. 0 xmm registers used
+   220 00000123 48BF-                   mov rdi, arrayB                 ;move arrayB to rdi so that it will be the first parameter being passed when calling input_array module
+   220 00000125 [9001000000000000] 
+   221 0000012D BE32000000              mov rsi, max                    ;move size of arrayB to rsi so that it will be the second parameter being passed when calling input_array module
+   222 00000132 E8(00000000)            call input_array                ;call input_array asm module to fill the array with floats entered by user
+   223 00000137 4989C6                  mov r14, rax                    ;r14 stores the count of floats entered into the array
+   224 0000013A 58                      pop rax                         ;remove earlier push
+   225                                  
+   226                                  ;========== Heading to output floats that were entered into arrayB ====================================================================================================
+   227 0000013B 6A00                    push qword 0                    ;Push 8 bytes to get onto an 16-byte boundary
+   228 0000013D B800000000              mov rax, 0                      ;no data from SSE will be printed i.e. 0 xmm registers used
+   229 00000142 48BF-                   mov rdi, confirm_arrayB         ;"These number were received and placed into array B:"
+   229 00000144 [3A01000000000000] 
+   230 0000014C E8(00000000)            call printf                     ;call external C++ function to print
+   231 00000151 58                      pop rax                         ;remove earlier push
+   232                                  
+   233                                  ;========== Output floats that were entered into arrayB by calling display_array module ===============================================================================
+   234 00000152 6A00                    push qword 0                    ;Push 8 bytes to get onto an 16-byte boundary
+   235 00000154 B800000000              mov rax, 0                      ;no data from SSE will be printed i.e. 0 xmm registers used
+   236 00000159 48BF-                   mov rdi, arrayB                 ;move arrayB to rdi so that it will be the first parameter being passed when calling display_array module
+   236 0000015B [9001000000000000] 
+   237 00000163 4C89F6                  mov rsi, r14                    ;move r15 to rsi so that it will be the second parameter being passed when calling display_array module
+   238 00000166 E8(00000000)            call display_array              ;call the display_array module that will output floats stored in the array in a single line separated by white spaces
+   239 0000016B 58                      pop rax                         ;remove earlier push
+   240                                  
+   241                                  ;========== Compute magnitude of arrayB by calling magnitude module ======================================================================================================
+   242 0000016C 6A00                    push qword 0                    ;Push 8 bytes to get onto an 16-byte boundary
+   243 0000016E B800000000              mov rax, 0                      ;no data from SSE will be printed i.e. 0 xmm registers used
+   244 00000173 48BF-                   mov rdi, arrayB                 ;move arrayB to rdi so that it will be the first parameter being passed when calling magnitude module
+   244 00000175 [9001000000000000] 
+   245 0000017D BE32000000              mov rsi, max                    ;move size of arrayA to rsi so that it will be the second parameter passed when calling magnitude module
+   246 00000182 E8(00000000)            call magnitude                  ;call magnitude module that will calculate the magnitude of the floats in arrayB
+   247 00000187 F2440F10F8              movsd xmm15, xmm0               ;xmm15 now contains the magnitude of arrayB
+   248 0000018C 58                      pop rax                         ;remove earlier push
+   249                                  
+   250                                  ;========== Output magnitude of arrayB =================================================================================================================================
+   251 0000018D 6A00                    push qword 0                    ;Push 8 bytes to get onto an 16-byte boundary
+   252 0000018F B801000000              mov rax, 1                      ;1 xmm register will be printed
+   253 00000194 48BF-                   mov rdi, output_arrayB          ;"The magnitude of array B is %.5lf"
+   253 00000196 [9301000000000000] 
+   254 0000019E F2410F10C7              movsd xmm0, xmm15               ;move magnitude of arrayB stored in xmm15 to xmm0 to be printed
+   255 000001A3 E8(00000000)            call printf                     ;call external C++ print function
+   256 000001A8 58                      pop rax                         ;remove earlier push
+   257                                  
+   258                                  ;========== Output heading to tell user that arrayA and arrayB have been appended =======================================================================================
+   259 000001A9 6A00                    push qword 0                    ;Push 8 bytes to get onto an 16-byte boundary
+   260 000001AB B800000000              mov rax, 0                      ;no data from SSE will be printed i.e. 0 xmm registers used
+   261 000001B0 48BF-                   mov rdi, confirm_appended       ;"Arrays A and B have been appended and given the name A⊕B."
+   261 000001B2 [BB01000000000000] 
+   262 000001BA E8(00000000)            call printf                     ;call external C++ print function
+   263 000001BF 58                      pop rax                         ;remove earlier push
+   264                                  
+   265                                  ;========== Output another heading that indicates after this line, the appended array will be outputted ================================================================
+   266 000001C0 6A00                    push qword 0                    ;Push 8 bytes to get onto an 16-byte boundary
+   267 000001C2 B800000000              mov rax, 0                      ;no data from SSE will be printed i.e. 0 xmm registers used
+   268 000001C7 48BF-                   mov rdi, output_AB              ;"A⊕B contains"
+   268 000001C9 [FA01000000000000] 
+   269 000001D1 E8(00000000)            call printf                     ;call external C++ print function
+   270 000001D6 58                      pop rax                         ;remove earlier push
+   271                                  
+   272                                  ;========== Append array A and B by calling the append module ==========================================================================================================
+   273 000001D7 6A00                    push qword 0                    ;Push 8 bytes to get onto an 16-byte boundary
+   274 000001D9 B800000000              mov rax, 0                      ;no data from SSE will be printed i.e. 0 xmm registers used
+   275 000001DE 48BF-                   mov rdi, arrayA                 ;move arrayA to rdi so that it will be the first parameter being passed when calling append module
+   275 000001E0 [0000000000000000] 
+   276 000001E8 4C89FE                  mov rsi, r15                    ;move r15(size of arrayA) to rsi so that it will be the second parameter being passed when calling append module
+   277 000001EB 48BA-                   mov rdx, arrayB                 ;move arrayB to rdx so that it will be the thrid parameter being passed when calling append module
+   277 000001ED [9001000000000000] 
+   278 000001F5 4C89F1                  mov rcx, r14                    ;move r14(size of arrayB) to rcx so that it will be the fourth parameter being passed when calling append module
+   279 000001F8 49B8-                   mov r8, combined_array          ;move the combined_array that will contain floats from arrayA and B to r8
+   279 000001FA [2003000000000000] 
+   280 00000202 E8(00000000)            call append                     ;call asm append module
+   281 00000207 4989C5                  mov r13, rax                    ;rax contains the size of combined_array
+   282 0000020A 58                      pop rax                         ;remove earlier push
+   283                                  
+   284                                  ;========== Display appended array by calling display_array module =====================================================================================================
+   285 0000020B 6A00                    push qword 0                    ;Push 8 bytes to get onto an 16-byte boundary
+   286 0000020D B800000000              mov rax, 0                      ;no data from SSE will be printed i.e. 0 xmm registers used
+   287 00000212 48BF-                   mov rdi, combined_array         ;move the combined array to rdi so that it will be the first parameter being passed when calling display_array module
+   287 00000214 [2003000000000000] 
+   288 0000021C 4C89EE                  mov rsi, r13                    ;move r13(size of combined array) to rsi so that it will be the second parameter being passed when calling display_array module
+   289 0000021F E8(00000000)            call display_array              ;call C display_array module that will output floats from the combined array
+   290 00000224 58                      pop rax                         ;remove earlier push
+   291                                  
+   292                                  ;========== Compute magnitude of the combined array by calling the magnitude module =====================================================================================
+   293 00000225 6A00                    push qword 0                    ;Push 8 bytes to get onto an 16-byte boundary
+   294 00000227 B800000000              mov rax, 0                      ;no data from SSE will be printed i.e. 0 xmm registers used
+   295 0000022C 48BF-                   mov rdi, combined_array         ;move the combined array to rdi so that it will be the first parameter being passed when calling magnitude module
+   295 0000022E [2003000000000000] 
+   296 00000236 4C89EE                  mov rsi, r13                    ;move r13(size of combined array) to rsi so that it will be the second parameter being passed when calling magnitude module
+   297 00000239 E8(00000000)            call magnitude                  ;call asm magnitude module
+   298 0000023E F2440F10F8              movsd xmm15, xmm0               ;move the magnitude returned from magnitude module to xmm15 for storage
+   299 00000243 58                      pop rax                         ;remove earlier push
+   300                                  
+   301                                  ;========== Output magnitude of the combined array =======================================================================================================================
+   302 00000244 6A00                    push qword 0                    ;Push 8 bytes to get onto an 16-byte boundary
+   303 00000246 B801000000              mov rax, 1                      ;1 xmm register will be used in this section
+   304 0000024B 48BF-                   mov rdi, output_magnitudeAB     ;"The magnitude of  A",0xE2, 0x8A, 0x95, " B is %.5lf"
+   304 0000024D [0B02000000000000] 
+   305 00000255 F2410F10C7              movsd xmm0, xmm15               ;move magnitude stored in xmm15 to xmm0 to be printed
+   306 0000025A E8(00000000)            call printf                     ;call external C++ function to print
+   307 0000025F 58                      pop rax                         ;remove earlier push
+   308                                  
+   309 00000260 F2410F10C7              movsd xmm0, xmm15               ;move magnitude of combined array stored in xmm15 to xmm0 so that it will be returned to main file
+   310 00000265 58                      pop rax                         ;counter push at the beginning
+   311                                  ;===== Restore original values to integer registers ====================================================================================================================
+   312 00000266 9D                      popf                                                        ;Restore rflags
+   313 00000267 5B                      pop rbx                                                     ;Restore rbx
+   314 00000268 415F                    pop r15                                                     ;Restore r15
+   315 0000026A 415E                    pop r14                                                     ;Restore r14
+   316 0000026C 415D                    pop r13                                                     ;Restore r13
+   317 0000026E 415C                    pop r12                                                     ;Restore r12
+   318 00000270 415B                    pop r11                                                     ;Restore r11
+   319 00000272 415A                    pop r10                                                     ;Restore r10
+   320 00000274 4159                    pop r9                                                      ;Restore r9
+   321 00000276 4158                    pop r8                                                      ;Restore r8
+   322 00000278 59                      pop rcx                                                     ;Restore rcx
+   323 00000279 5A                      pop rdx                                                     ;Restore rdx
+   324 0000027A 5E                      pop rsi                                                     ;Restore rsi
+   325 0000027B 5F                      pop rdi                                                     ;Restore rdi
+   326 0000027C 5D                      pop rbp                                                     ;Restore rbp
+   327                                  
+   328 0000027D C3                      ret
+   329                                  ;========== End of program pythagoras.asm =================================================================================================================================
+   330                                  ;========1=========2=========3=========4=========5=========6=========7=========8=========9=========0=========1=========2=========3=========4=========5=========6=========7**
+   331                                  
