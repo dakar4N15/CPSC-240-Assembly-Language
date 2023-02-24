@@ -17,3 +17,8 @@ g++ -m64 -std=c++14 -fno-pie -no-pie -o final.out pythagoras.o driver.o
 
 echo "Run the program:"
 ./final.out
+
+#Clean up after program is run
+rm *.o
+rm *.out
+rm *.lis

@@ -32,3 +32,8 @@ g++ -m64 -std=c++17 -fno-pie -no-pie -o final.out main.o manager.o input_array.o
 
 echo "Run the program:"
 ./final.out
+
+#Clean up after program is run
+rm *.o
+rm *.out
+rm *.lis
